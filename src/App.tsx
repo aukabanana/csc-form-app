@@ -1,58 +1,56 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import SignUp from '../src/SignUpForm.tsx'
+
 const loginSchema = z.object({
-  email: z.email("Please enter a valid email address"),
+  email: z.string().email("Please enter a valid email address"),
+  name: z.string().min(1 , "Name is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
-type FormErrors = Partial<Record<keyof LoginFormData, string>>;
 
 function App() {
-  const [formData, setFormData] = useState<LoginFormData>({
-    email: "",
-    password: "",
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const result = loginSchema.safeParse(formData);
-
-    if (result.success) {
-      setErrors({});
-      console.log("✅ Form submitted successfully:", result.data);
-    } else {
-      const errorMap: FormErrors = {};
-      result.error.issues.forEach((err) => {
-        const field = err.path[0] as keyof LoginFormData;
-        errorMap[field] = err.message;
-      });
-      setErrors(errorMap);
-    }
+  const onSubmit = (data: LoginFormData) => {
+    console.log("✅ Form submitted successfully:", data);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div>
         <label htmlFor="email">Email</label>
         <input
           id="email"
           type="text"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
           placeholder="Enter your email"
+          {...register("email")}
         />
-        {errors.email && <span style={{ color: "red" }}>{errors.email}</span>}
+        {errors.email && (
+          <span style={{ color: "red" }}>{errors.email.message}</span>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="name">namename</label>
+        <input 
+          id="name"
+          type="text" 
+          placeholder="Enter your name"
+          {...register("name")}  
+        />
+        {errors.name && (
+          <span style={{color: "red"}}>{errors.name.message}</span>
+        )}
       </div>
 
       <div>
@@ -60,13 +58,11 @@ function App() {
         <input
           id="password"
           type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
           placeholder="Enter your password"
+          {...register("password")}
         />
         {errors.password && (
-          <span style={{ color: "red" }}>{errors.password}</span>
+          <span style={{ color: "red" }}>{errors.password.message}</span>
         )}
       </div>
 
